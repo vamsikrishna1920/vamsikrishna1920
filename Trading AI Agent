@@ -1,0 +1,141 @@
+"""
+AI Agent - ReAct Flow strictly based on provided architecture
+"""
+
+import requests
+from typing import Dict, Any
+
+# ---------------------------
+# Webhook Entry
+# ---------------------------
+def webhook_handler(request: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Incoming webhook handler.
+    request: { "method": "GET|POST|DELETE", "data": {...} }
+    """
+    ai_response = ai_agent(request)
+    return ai_response
+
+
+# ---------------------------
+# ReAct AI Agent
+# ---------------------------
+def ai_agent(request: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Core ReAct agent orchestrator.
+    """
+    method = request.get("method", "GET").upper()
+    data = request.get("data", {})
+
+    # Step 1: Use LLM (Google Gemini / Groq)
+    user_query = data.get("query", "")
+    reasoning_output = call_google_gemini(user_query)
+
+    # Step 2: Fetch Proxmox Documentation & Wiki if needed
+    proxmox_info = get_proxmox_api_doc()
+    proxmox_wiki = get_proxmox_wiki()
+
+    # Step 3: Auto-fixing output parser
+    parsed_output = auto_fixing_parser(reasoning_output, proxmox_info, proxmox_wiki)
+
+    # Step 4: Switch on method
+    if method == "GET":
+        response = get_properties(parsed_output)
+    elif method == "POST":
+        response = post_url(parsed_output)
+    elif method == "DELETE":
+        response = delete_url(parsed_output)
+    else:
+        response = {"error": "Unsupported method"}
+
+    return response
+
+
+# ---------------------------
+# Google Gemini Model Call
+# ---------------------------
+def call_google_gemini(query: str) -> str:
+    # Placeholder: Replace with actual Gemini API call
+    return f"[Gemini Reasoning] Based on query: {query}"
+
+
+# ---------------------------
+# Proxmox API Documentation
+# ---------------------------
+def get_proxmox_api_doc() -> Dict[str, Any]:
+    return {"api_doc": "Details of Proxmox API endpoints."}
+
+
+# ---------------------------
+# Proxmox Wiki
+# ---------------------------
+def get_proxmox_wiki() -> Dict[str, Any]:
+    return {"wiki": "Additional Proxmox API usage examples."}
+
+
+# ---------------------------
+# Auto-fixing Output Parser
+# ---------------------------
+def auto_fixing_parser(output: str, doc: Dict[str, Any], wiki: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Validates and structures LLM output.
+    """
+    structured = {
+        "parsed_text": output,
+        "reference_doc": doc,
+        "reference_wiki": wiki
+    }
+    return structured
+
+
+# ---------------------------
+# Structured Output Parser
+# ---------------------------
+def structured_output_parser(data: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "clean_text": data.get("parsed_text", ""),
+        "metadata": {
+            "doc_ref": data.get("reference_doc"),
+            "wiki_ref": data.get("reference_wiki")
+        }
+    }
+
+
+# ---------------------------
+# Proxmox Operations
+# ---------------------------
+def get_properties(parsed: Dict[str, Any]) -> Dict[str, Any]:
+    # Simulated GET request
+    return {"properties": {"status": "running", "vm_id": 101}, "source": parsed}
+
+
+def post_url(parsed: Dict[str, Any]) -> Dict[str, Any]:
+    # Simulated POST request
+    return {"post_status": "success", "details": parsed}
+
+
+def delete_url(parsed: Dict[str, Any]) -> Dict[str, Any]:
+    # Simulated DELETE request
+    return {"delete_status": "success", "details": parsed}
+
+
+# ---------------------------
+# Return Output
+# ---------------------------
+def return_output(response: Dict[str, Any]) -> Dict[str, Any]:
+    return {"final_response": response}
+
+
+# ---------------------------
+# Demo Run
+# ---------------------------
+if __name__ == "__main__":
+    test_request = {
+        "method": "GET",
+        "data": {
+            "query": "Get details of VM 101"
+        }
+    }
+
+    result = webhook_handler(test_request)
+    print("Final Output:", result)
